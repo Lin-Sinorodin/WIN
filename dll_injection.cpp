@@ -3,6 +3,41 @@
 #include <tchar.h>
 #include <psapi.h>
 
+// modified from https://learn.microsoft.com/en-us/windows/win32/psapi/enumerating-all-processes
+void GetProcessName(DWORD processID, TCHAR szProcessName) {
+    szProcessName = TEXT("<unknown>");
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+    if (NULL != hProcess ) {
+        HMODULE hModule;
+        DWORD cbNeeded;
+        if (EnumProcessModules(hProcess, &hModule, sizeof(hModule), &cbNeeded)) {
+            GetModuleBaseName(hProcess, hModule, szProcessName, sizeof(szProcessName)/sizeof(TCHAR));
+        }
+    }
+    CloseHandle(hProcess);
+}
+
+
+// modified from https://learn.microsoft.com/en-us/windows/win32/psapi/enumerating-all-processes
+DWORD FindProcessByName() {
+    // Get the list of process identifiers.
+    DWORD aProcesses[1024], cbNeeded;
+    if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded)) {
+        return 1;
+    }
+
+    // Calculate how many process identifiers were returned.
+    DWORD cProcesses = cbNeeded / sizeof(DWORD);
+
+    // Print the name and process identifier for each process.
+    TCHAR szProcessName[MAX_PATH];
+    for (int i = 0; i < cProcesses; i++) {
+        if(aProcesses[i] != 0) {
+            GetProcessName(aProcesses[i], szProcessName);
+        }
+    }
+}
+
 
 int main()
 {
